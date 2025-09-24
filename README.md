@@ -1,12 +1,12 @@
 "# Kolam Design Classifier 🎨
 
-A deep learning project that classifies different types of Kolam designs using EfficientNet-B0 with transfer learning.
+A deep learning project that classifies different types of Kolam designs using a few-shot learning approach with EfficientNet-B0 backbone.
 
 ## 🎯 Project Overview
 
-This project implements a complete pipeline for training a Kolam design classifier using:
-- **EfficientNet-B0** as the base model with ImageNet pretrained weights
-- **Transfer Learning** to adapt the model for Kolam classification
+This project implements a few-shot learning classifier for Kolam designs using:
+- **Prototypical Networks** for few-shot learning
+- **EfficientNet-B0** as the feature extractor backbone
 - **HuggingFace Datasets** to load the `ayshthkr/kolam_dataset`
 - **PyTorch** for deep learning implementation
 
@@ -14,16 +14,12 @@ This project implements a complete pipeline for training a Kolam design classifi
 
 ```
 Kolam Classifier/
-├── kolam_classifier.py    # Main training script
-├── inference.py          # Inference script for predictions
-├── requirements.txt      # Python dependencies
-├── README.md            # This file
-├── image.png           # Sample image for testing
-├── test.png           # Another test image
-└── images/            # Directory with kolam images
-    ├── img1.jpg
-    ├── img2.jpg
-    └── ...
+├── few_shot_kolam_classifier.py    # Few-shot classifier implementation
+├── few_shot_kolam_classifier.pth   # Trained model weights
+├── kolam_classifier_wrapper.py     # Wrapper class for easy usage
+├── inference.py                    # Inference script for predictions
+├── requirements_fewshot.txt        # Python dependencies
+└── README.md                      # This file
 ```
 
 ## 🔧 Installation & Setup
@@ -34,129 +30,138 @@ Kolam Classifier/
 
 ### Install Dependencies
 ```bash
-pip install -r requirements.txt
+pip install -r requirements_fewshot.txt
 ```
 
 ## 🚀 Usage
 
-### 1. Training the Model
+### 1. Using the Pre-trained Model
 
-Run the main training script:
-```bash
-python kolam_classifier.py
+The project includes a pre-trained few-shot Kolam classifier. Use the wrapper class for easy predictions:
+
+```python
+from kolam_classifier_wrapper import KolamClassifier
+from PIL import Image
+
+# Initialize classifier
+classifier = KolamClassifier()
+
+# Load and predict on an image
+image = Image.open('your_kolam_image.jpg')
+result = classifier.predict_kolam_type(image)
+
+print(f"Predicted class: {result['predicted_class']}")
+print(f"Confidence: {result['confidence']:.2%}")
 ```
 
-This will:
-- Load the HuggingFace dataset `ayshthkr/kolam_dataset`
-- Split data into 70% train, 15% validation, 15% test
-- Apply data augmentation and preprocessing
-- Train EfficientNet-B0 for 10 epochs
-- Evaluate on test set
-- Save the trained model as `efficientnet_kolam.pth`
-- Generate training plots and confusion matrix
+### 2. Using the Inference Script
 
-### 2. Making Predictions
-
-After training, use the inference script:
+Run the inference script directly:
 ```bash
 python inference.py
 ```
 
 This will load the trained model and make predictions on sample images.
 
-### 3. Custom Image Prediction
+### 3. Training a New Model
 
-You can modify the `inference.py` script to predict on your own images:
-
-```python
-predictor = KolamPredictor()
-result = predictor.predict_image('path/to/your/image.jpg')
+If you want to train your own model, use the few-shot classifier:
+```bash
+python few_shot_kolam_classifier.py
 ```
 
 ## 📊 Model Architecture
 
-- **Base Model**: EfficientNet-B0 (pretrained on ImageNet)
+- **Architecture**: Prototypical Networks (Few-shot Learning)
+- **Backbone**: EfficientNet-B0 (pretrained on ImageNet)
+- **Feature Dimension**: 1280 → 256 (with projection layer)
 - **Input Size**: 224×224 pixels
 - **Output Classes**: 8 Kolam categories
-- **Optimizer**: Adam (lr=0.001)
-- **Loss Function**: CrossEntropyLoss
+- **Learning Approach**: Few-shot learning with prototypical networks
 
 ## 🔄 Data Processing Pipeline
 
-### Training Data Augmentation:
-- Random horizontal flip (50%)
-- Random rotation (±10°)
-- Color jitter (brightness, contrast, saturation, hue)
-- Random crop after resize
+### Few-shot Learning Setup:
+- **Support Set**: Small number of examples per class for prototypes
+- **Query Set**: Test examples for classification
+- **Episode-based Training**: Simulates few-shot scenarios during training
 
 ### Preprocessing:
 - Resize to 224×224 pixels
 - Normalize with ImageNet mean/std values
+- Data augmentation during training (horizontal flip, rotation, color jitter)
 
 ## 📈 Training Process
 
-The training pipeline includes:
-1. **Dataset Loading**: Load from HuggingFace and create custom splits
-2. **Data Augmentation**: Apply transformations for robustness
-3. **Model Creation**: EfficientNet-B0 with custom classifier head
-4. **Training Loop**: 10 epochs with validation monitoring
-5. **Early Stopping**: Save best model based on validation accuracy
-6. **Evaluation**: Comprehensive metrics on test set
+The few-shot learning pipeline includes:
+1. **Dataset Loading**: Load from HuggingFace `ayshthkr/kolam_dataset`
+2. **Episode Creation**: Generate training episodes with support/query sets
+3. **Prototype Learning**: Learn class prototypes from support examples
+4. **Distance-based Classification**: Classify queries based on prototype distances
+5. **Model Saving**: Save trained prototypical network weights
 
 ## 📊 Evaluation Metrics
 
-The model is evaluated using:
-- **Overall Accuracy**
-- **Per-class Precision, Recall, F1-score**
-- **Confusion Matrix**
-- **Training/Validation Loss and Accuracy Plots**
+The few-shot model is evaluated using:
+- **Episode-based Accuracy**: Performance on few-shot episodes
+- **Confidence Scores**: Probability distributions for predictions
+- **Class-wise Performance**: Individual class prediction accuracy
 
-## 💾 Model Saving
+## 💾 Model Loading
 
-The trained model is saved with:
-- Model state dictionary
-- Class names
-- Number of classes
+The pre-trained model (`few_shot_kolam_classifier.pth`) includes:
+- Prototypical network state dictionary
+- Class names mapping
+- Feature extraction backbone weights
 
-This allows easy loading for inference without retraining.
+Load easily using the wrapper class for immediate inference.
 
 ## 🔍 Features
 
-### Training Script (`kolam_classifier.py`)
-- ✅ Automatic dataset loading and splitting
-- ✅ Data augmentation and preprocessing
-- ✅ Transfer learning with EfficientNet-B0
-- ✅ Training progress monitoring
-- ✅ Validation during training
-- ✅ Comprehensive evaluation
-- ✅ Visualization of results
-- ✅ Model saving
+### Few-Shot Classifier (`few_shot_kolam_classifier.py`)
+- ✅ Prototypical Networks implementation
+- ✅ EfficientNet-B0 feature extraction
+- ✅ Episode-based training
+- ✅ Few-shot learning capabilities
+- ✅ Model saving and loading
+
+### Classifier Wrapper (`kolam_classifier_wrapper.py`)
+- ✅ Easy-to-use interface for predictions
+- ✅ Confidence score calculation
+- ✅ Class name mapping
+- ✅ Error handling and validation
 
 ### Inference Script (`inference.py`)
-- ✅ Load trained model
-- ✅ Predict single images
-- ✅ Top-3 predictions with confidence scores
-- ✅ Visualization of results
-- ✅ Error handling
+- ✅ Load pre-trained model
+- ✅ Predict on sample images
+- ✅ Confidence scores and probabilities
+- ✅ Visual results display
 
 ## 🎨 Kolam Categories
 
 The model classifies 8 different types of Kolams:
-(Categories will be displayed after loading the dataset)
+- **geometric**: Geometric patterns
+- **butterfly**: Butterfly-shaped designs
+- **pulli**: Dot-based kolams
+- **flower**: Floral patterns
+- **naga**: Snake-inspired designs
+- **sikku**: Line-based interlaced patterns
+- **kamal**: Lotus-inspired designs
+- **traditional**: Classical traditional patterns
 
 ## 🔧 Customization
 
-### Hyperparameters
-You can modify training parameters in `kolam_classifier.py`:
-- `num_epochs`: Number of training epochs
-- `learning_rate`: Learning rate for optimizer
-- `batch_size`: Batch size for training
-- Image augmentation parameters
+### Model Parameters
+You can modify parameters in `few_shot_kolam_classifier.py`:
+- `feature_dim`: Feature dimension for embeddings
+- `backbone`: Feature extraction backbone model
+- Episode configuration for training
 
-### Model Architecture
-- Change base model (e.g., ResNet, DenseNet)
-- Modify classifier head
-- Adjust dropout rates
+### Wrapper Configuration
+Modify `kolam_classifier_wrapper.py` for:
+- Custom class mappings
+- Confidence thresholds
+- Input preprocessing options
 
 ## 📋 System Requirements
 
@@ -167,14 +172,15 @@ You can modify training parameters in `kolam_classifier.py`:
 ## 🐛 Troubleshooting
 
 ### Common Issues:
-1. **CUDA out of memory**: Reduce batch size
-2. **Dataset loading error**: Check internet connection
-3. **Import errors**: Ensure all dependencies are installed
+1. **Model loading error**: Ensure `few_shot_kolam_classifier.pth` exists
+2. **Import errors**: Install dependencies with `pip install -r requirements_fewshot.txt`
+3. **CUDA issues**: Model automatically uses CPU if CUDA unavailable
+4. **Image format errors**: Ensure images are in supported formats (JPG, PNG)
 
 ### Performance Tips:
-- Use GPU for faster training
-- Adjust batch size based on available memory
-- Experiment with learning rate scheduling
+- Use GPU for faster inference
+- PIL Image objects work best for predictions
+- Ensure images are properly formatted before prediction
 
 ## 📜 License
 
