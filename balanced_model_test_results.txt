@@ -1,0 +1,33 @@
+Balanced Binary Kolam Classifier Test Results
+==================================================
+
+Model: balanced_kolam_classifier_undersample.pth
+Balance method: undersample
+Dataset: 747 images
+Non-Sikku: 83 images (11.1%)
+Sikku: 664 images (88.9%)
+
+Overall Accuracy: 0.934
+Balanced Accuracy: 0.953
+Overall Precision: 0.815
+Overall Recall: 0.953
+Overall F1-Score: 0.865
+
+Per-Class Metrics:
+Non-Sikku:
+  Precision: 0.633
+  Recall: 0.976
+  F1-Score: 0.768
+  Support: 83 samples
+
+Sikku:
+  Precision: 0.997
+  Recall: 0.929
+  F1-Score: 0.962
+  Support: 664 samples
+
+Confusion Matrix:
+             Predicted
+Actual    Non-Sikku  Sikku
+Non-Sikku        81      2
+Sikku            47    617
